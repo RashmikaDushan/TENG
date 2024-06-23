@@ -1,21 +1,38 @@
 class CyclicBuffer
 {
 private:
-    int size;     // Size of the buffer
+    int length;     // Size of the buffer
     int *buffer;  // Pointer to the buffer array
     int head;     // Index of the next insertion
-    int tail;     // Index of the next removal
-    int valCount; // Count of the current elements in the buffer
+    int *bufferArray; // Ordered array
+
+    void inOrder(){
+        int i = 0;
+        for (int j = head; j < length; j++)
+        {
+            bufferArray[i] = buffer[j];
+            i++;
+        }
+        for (int j = 0; j < head; j++)
+        {
+            bufferArray[i] = buffer[j];
+            i++;
+        }
+    }
 
 public:
     // Constructor: Initializes the buffer with the given size
-    CyclicBuffer(int size)
+    CyclicBuffer(int length)
     {
-        this->size = size;
-        buffer = new int[size];
+        this->length = length;
+        buffer = new int[length];
+        bufferArray = new int[length];
+        for (int i = 0; i < length; ++i)
+        {
+            buffer[i] = 0;
+            bufferArray[i] = 0;
+        }
         head = 0;
-        tail = 0;
-        valCount = 0;
     }
 
     // Destructor: Deallocates the buffer memory
@@ -28,134 +45,58 @@ public:
     void push(int value)
     {
         buffer[head] = value; // Insert value at the head
-
-        // If the buffer is full, move the tail to the next position
-        if (valCount == size)
-        {
-            tail = (tail + 1) % size;
-        }
-        else
-        {
-            valCount++; // Otherwise, increase the element count
-        }
-
-        head = (head + 1) % size; // Move head to the next position
-    }
-
-    // Pop a value from the buffer
-    int pop()
-    {
-        // If the buffer is empty, return a placeholder value
-        if (isEmpty())
-        {
-            return -1; // Placeholder value for an empty buffer
-        }
-
-        int value = buffer[tail]; // Get the value at the tail
-        tail = (tail + 1) % size; // Move tail to the next position
-        valCount--;               // Decrease the element count
-        return value;
-    }
-
-    // Check if the buffer is full
-    bool isFull()
-    {
-        return valCount == size;
-    }
-
-    // Check if the buffer is empty
-    bool isEmpty()
-    {
-        return valCount == 0;
+        head = (head + 1) % length; // Move head to the next position
     }
 
     // Get the buffer size in bytes
-    size_t bufferSizeBytes()
+    size_t sizeBytes()
     {
-        return size*sizeof(int);
+        return length * sizeof(int);
     }
 
     // Get the buffer size
-    size_t bufferSize()
+    size_t size()
     {
-        return size;
+        return length;
     }
 
     // Print the array in hex
-    void printHex(){
-        for (int i = 0; i < size; i++)
+    void printHex() // this prints 0 to length -- should be tail to head
+    {
+        inOrder();
+        for (int i = 0; i < length; i++)
         {
-            Serial.printf("%X",buffer[i]);
+            Serial.printf("%04X", bufferArray[i]);
             Serial.print(" ");
         }
         Serial.println();
     }
 
-    // Find the maximum value in the buffer
-    int buffmax()
+    // Print the array
+    void print() // this prints 0 to length -- should be tail to head
     {
-        // If the buffer is empty, return a placeholder value
-        if (isEmpty())
+        inOrder();
+        for (int i = 0; i < length; i++)
         {
-            return -1; // Placeholder value for an empty buffer
+            Serial.print(bufferArray[i]);
+            Serial.print(" ");
         }
-
-        int maxVal = buffer[tail];         // Start with the value at the tail
-        for (int i = 1; i < valCount; i++) // Iterate over the valid elements
-        {
-            int index = (tail + i) % size; // Calculate the current index
-            if (buffer[index] > maxVal)    // Update maxVal if a larger value is found
-            {
-                maxVal = buffer[index];
-            }
-        }
-        return maxVal; // Return the maximum value found
-    }
-
-    // Get the current head position
-    int getHead()
-    {
-        return head;
-    }
-
-    // Peek the value at the tail without removing it
-    int peek()
-    {
-        // If the buffer is not empty, return the value at the tail
-        if (!isEmpty())
-        {
-            return buffer[tail];
-        }
-        else
-        {
-            return -1; // Placeholder value for an empty buffer
-        }
-    }
-
-    // Get the value at a specific index
-    int get(int index)
-    {
-        // If the index is within valid range, return the corresponding value
-        if (index >= 0 && index < valCount)
-        {
-            return buffer[(tail + index) % size];
-        }
-        else
-        {
-            return -1; // Placeholder value for an invalid index
-        }
+        Serial.println();
     }
 
     // Clear the buffer
     void clear()
     {
         head = 0;
-        tail = 0;
-        valCount = 0; // Reset the element count
+        for (int i = 0; i < length; ++i)
+        {
+            buffer[i] = 0;
+        }
     }
 
-    void toByteArray(byte * byteArray)
+    void toByteArray(byte *byteArray)
     {
-        memcpy(byteArray, buffer, sizeof(buffer));
+        inOrder();
+        memcpy(byteArray, bufferArray, sizeof(bufferArray));
     }
 };

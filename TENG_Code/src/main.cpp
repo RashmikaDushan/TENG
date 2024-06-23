@@ -88,8 +88,7 @@ void collectData(void *parameter)
     reading = analogRead(sensor);
     buffer.push(reading);
     vTaskDelay(100 / portTICK_PERIOD_MS);
-    Serial.print("reading: ");
-    Serial.println(reading);
+    buffer.print(); // print the buffer in hex
   }
 }
 
@@ -101,7 +100,6 @@ void sendData(void *parameter)
     if (deviceConnected)
     {
       buffer.toByteArray(byteArray); // convert buffer to a byte array
-      buffer.printHex(); // print the buffer in hex
       pCharacteristic->setValue(byteArray, buffer.bufferSizeBytes());
       pCharacteristic->indicate();
       value++;

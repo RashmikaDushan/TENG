@@ -6,7 +6,6 @@ private:
     int head;     // Index of the next insertion
     int tail;     // Index of the next removal
     int valCount; // Count of the current elements in the buffer
-    // byte *byteBuffer; // Pointer to the byte buffer array
 
 public:
     // Constructor: Initializes the buffer with the given size
@@ -14,7 +13,6 @@ public:
     {
         this->size = size;
         buffer = new int[size];
-        // byteBuffer = new byte[sizeof(int)*100];
         head = 0;
         tail = 0;
         valCount = 0;
@@ -71,10 +69,26 @@ public:
         return valCount == 0;
     }
 
+    // Get the buffer size in bytes
+    size_t bufferSizeBytes()
+    {
+        return size*sizeof(int);
+    }
+
     // Get the buffer size
-    int bufferSize()
+    size_t bufferSize()
     {
         return size;
+    }
+
+    // Print the array in hex
+    void printHex(){
+        for (int i = 0; i < size; i++)
+        {
+            Serial.printf("%X",buffer[i]);
+            Serial.print(" ");
+        }
+        Serial.println();
     }
 
     // Find the maximum value in the buffer
@@ -143,11 +157,5 @@ public:
     void toByteArray(byte * byteArray)
     {
         memcpy(byteArray, buffer, sizeof(buffer));
-        // return byteBuffer;
-    }
-
-    int* toArray()
-    {
-        return buffer;
     }
 };

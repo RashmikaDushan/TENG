@@ -1,12 +1,13 @@
 class CyclicBuffer
 {
 private:
-    int length;     // Size of the buffer
-    uint8_t *buffer;  // Pointer to the buffer array
-    int head;     // Index of the next insertion
+    int length;           // Size of the buffer
+    uint8_t *buffer;      // Pointer to the buffer array
+    int head;             // Index of the next insertion
     uint8_t *bufferArray; // Ordered array
 
-    void inOrder(){
+    void inOrder()
+    {
         int i = 0;
         for (int j = head; j < length; j++)
         {
@@ -44,7 +45,7 @@ public:
     // Push a value into the buffer
     void push(uint8_t value)
     {
-        buffer[head] = value; // Insert value at the head
+        buffer[head] = value;       // Insert value at the head
         head = (head + 1) % length; // Move head to the next position
     }
 
@@ -61,29 +62,53 @@ public:
     }
 
     // Print the array in hex
-    void printHex(bool goToNextLine) // this prints 0 to length -- should be tail to head
+    void printHex(bool goToNextLine, bool reverse) // this prints 0 to length -- should be tail to head
     {
         inOrder();
-        for (int i = length-1; i >= 0; i--)
+        if (reverse)
         {
-            Serial.printf("%02X", bufferArray[i]);
-            Serial.print(" ");
+            for (int i = 0; i < length; i++)
+            {
+                Serial.printf("%02X", bufferArray[i]);
+                Serial.print(" ");
+            }
         }
-        if(goToNextLine){
+        else
+        {
+            for (int i = length - 1; i >= 0; i--)
+            {
+                Serial.printf("%02X", bufferArray[i]);
+                Serial.print(" ");
+            }
+        }
+        if (goToNextLine)
+        {
             Serial.println();
         }
     }
 
     // Print the array
-    void print(bool goToNextLine) // this prints 0 to length -- should be tail to head
+    void print(bool goToNextLine, bool reverse) // this prints 0 to length -- should be tail to head
     {
         inOrder();
-        for (int i = length-1; i >= 0; i--)
+        if (reverse)
         {
-            Serial.print(bufferArray[i]);
-            Serial.print(" ");
+            for (int i = 0; i < length; i++)
+            {
+                Serial.print(bufferArray[i]);
+                Serial.print(" ");
+            }
         }
-        if(goToNextLine){
+        else
+        {
+            for (int i = length - 1; i >= 0; i--)
+            {
+                Serial.print(bufferArray[i]);
+                Serial.print(" ");
+            }
+        }
+        if (goToNextLine)
+        {
             Serial.println();
         }
     }
@@ -102,5 +127,11 @@ public:
     {
         inOrder();
         memcpy(byteArray, bufferArray, sizeof(uint8_t) * length);
+    }
+
+    uint8_t *toByteArrayItself(byte *byteArray)
+    {
+        inOrder();
+        return bufferArray;
     }
 };

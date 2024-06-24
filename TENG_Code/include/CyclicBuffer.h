@@ -2,9 +2,9 @@ class CyclicBuffer
 {
 private:
     int length;     // Size of the buffer
-    int *buffer;  // Pointer to the buffer array
+    uint8_t *buffer;  // Pointer to the buffer array
     int head;     // Index of the next insertion
-    int *bufferArray; // Ordered array
+    uint8_t *bufferArray; // Ordered array
 
     void inOrder(){
         int i = 0;
@@ -25,8 +25,8 @@ public:
     CyclicBuffer(int length)
     {
         this->length = length;
-        buffer = new int[length];
-        bufferArray = new int[length];
+        buffer = new uint8_t[length];
+        bufferArray = new uint8_t[length];
         for (int i = 0; i < length; ++i)
         {
             buffer[i] = 0;
@@ -42,7 +42,7 @@ public:
     }
 
     // Push a value into the buffer
-    void push(int value)
+    void push(uint8_t value)
     {
         buffer[head] = value; // Insert value at the head
         head = (head + 1) % length; // Move head to the next position
@@ -61,27 +61,31 @@ public:
     }
 
     // Print the array in hex
-    void printHex() // this prints 0 to length -- should be tail to head
+    void printHex(bool goToNextLine) // this prints 0 to length -- should be tail to head
     {
         inOrder();
-        for (int i = 0; i < length; i++)
+        for (int i = length-1; i >= 0; i--)
         {
-            Serial.printf("%04X", bufferArray[i]);
+            Serial.printf("%02X", bufferArray[i]);
             Serial.print(" ");
         }
-        Serial.println();
+        if(goToNextLine){
+            Serial.println();
+        }
     }
 
     // Print the array
-    void print() // this prints 0 to length -- should be tail to head
+    void print(bool goToNextLine) // this prints 0 to length -- should be tail to head
     {
         inOrder();
-        for (int i = 0; i < length; i++)
+        for (int i = length-1; i >= 0; i--)
         {
             Serial.print(bufferArray[i]);
             Serial.print(" ");
         }
-        Serial.println();
+        if(goToNextLine){
+            Serial.println();
+        }
     }
 
     // Clear the buffer
@@ -97,6 +101,6 @@ public:
     void toByteArray(byte *byteArray)
     {
         inOrder();
-        memcpy(byteArray, bufferArray, sizeof(bufferArray));
+        memcpy(byteArray, bufferArray, sizeof(uint8_t) * length);
     }
 };

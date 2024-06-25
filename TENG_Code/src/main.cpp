@@ -28,36 +28,37 @@ void sendData(void *Parameters);
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
-  void onConnect(BLEServer *pServer)
-  {
-    deviceConnected = true;
-  };
+    void onConnect(BLEServer *pServer)
+    {
+        deviceConnected = true;
+    };
 
-  void onDisconnect(BLEServer *pServer)
-  {
-    deviceConnected = false;
-  }
+    void onDisconnect(BLEServer *pServer)
+    {
+        deviceConnected = false;
+    }
 };
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     pinMode(sensorPin, INPUT);
     analogReadResolution(8);
 
-      // Create the BLE Device
-  BLEDevice::init("TENG Sensor");
+    // Create the BLE Device
+    BLEDevice::init("TENG Sensor");
 
-  // Create the BLE Server
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+    // Create the BLE Server
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
 
-  // Create the BLE Service
-  BLEService *pService = pServer->createService(SERVICE_UUID);
+    // Create the BLE Service
+    BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create a BLE Characteristic
-  pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_INDICATE);
+    // Create a BLE Characteristic
+    pCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_INDICATE);
 
     pCharacteristic->addDescriptor(new BLE2902());
 
@@ -77,43 +78,48 @@ void setup() {
     xTaskCreate(sendData, "Sending Data", 10000, NULL, 3, NULL);
 }
 
-void loop() {
+void loop()
+{
 }
 
-void collectData(void *Parameters) {
-    for(;;) {
+void collectData(void *Parameters)
+{
+    for (;;)
+    {
         reading = analogRead(sensorPin);
         Serial.print("Reading: ");
-        Serial.printf("%02X",reading);
+        Serial.printf("%02X", reading);
         Serial.println();
         buffer.push(reading);
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
 
-void sendData(void *Parameters) {
-    for(;;) {
+void sendData(void *Parameters)
+{
+    for (;;)
+    {
         if (deviceConnected)
-    {
-      buffer.toByteArray(byteArray);
-      buffer.printHex(true,true);
-      pCharacteristic->setValue(byteArray, bufferSize * sizeof(uint8_t));
-      pCharacteristic->indicate();
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-    }
-    // disconnecting
-    if (!deviceConnected && oldDeviceConnected)
-    {
-      delay(500);                  // give the bluetooth stack the chance to get things ready
-      pServer->startAdvertising(); // restart advertising
-      Serial.println("start advertising");
-      oldDeviceConnected = deviceConnected;
-    }
-    // connecting
-    if (deviceConnected && !oldDeviceConnected)
-    {
-      // do stuff here on connecting
-      oldDeviceConnected = deviceConnected;
-    }
+        {
+            buffer.toByteArray(byteArray);
+            buffer.printHex(true, true);
+            pCharacteristic->setValue(byteArray, bufferSize * sizeof(uint8_t));
+            pCharacteristic->indicate();
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
+        }
+        // disconnecting
+        if (!deviceConnected && oldDeviceConnected)
+        {
+            delay(500);                  // give the bluetooth stack the chance to get things ready
+            pServer->startAdvertising(); // restart advertising
+            Serial.println("start advertising");
+            oldDeviceConnected = deviceConnected;
+        }
+        // connecting
+        if (deviceConnected && !oldDeviceConnected)
+        {
+            // do stuff here on connecting
+            oldDeviceConnected = deviceConnected;
+        }
     }
 }

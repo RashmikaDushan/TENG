@@ -21,7 +21,7 @@ async def main():
 
             async with BleakClient(device.address) as client:
                 try:
-                    client.pair()
+                    await client.pair()
                     services = client.services
                     print(f"Services for {device.name} ({device.address}):")
                     service_number = 0
@@ -44,8 +44,8 @@ async def main():
                     print(f"Characteristic {characteristic_uuid}")
                     while True:
                         value = await client.read_gatt_char(characteristic_uuid)
-                        print(binascii.hexlify(bytearray(value)))
-                        time.sleep(0.5)
+                        print(list(value))
+                        await asyncio.sleep(0.5)
                 except Exception as e:
                     print(f"Failed to connect to {device.name} ({device.address}): {e}")
 

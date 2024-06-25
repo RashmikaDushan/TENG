@@ -35,8 +35,9 @@ async def main(preconfigured):
                 global characteristic_uuid
                 while True: # Read the value of the preconfigured characteristic
                     value = await client.read_gatt_char(characteristic_uuid)
-                    print(list(value))
-                    await asyncio.sleep(0.5)
+                    value = list(value)
+                    voltages = [x*3.3/255 for x in value]
+                    print(voltages)
 
                     
         if not(preconfigured): # If the device is not preconfigured, list all devices and ask the user to select one
@@ -88,4 +89,4 @@ async def main(preconfigured):
     except Exception as e:
         print(f"Error: {e}")
 
-asyncio.run(main(False))
+asyncio.run(main(True))

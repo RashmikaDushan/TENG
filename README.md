@@ -46,7 +46,7 @@ We welcome contributions to improve the TENG Sensor Mat Project. Please fork thi
 
 For any questions, suggestions, or feedback, please feel free to contact us:
 
-- **Email**: [rashmika.21@cse.mrt.ac.lk](mailto:rashmika.21@cse.mrt.ac.lk)
+- **Email**: [rashmika.21@cse.mrt.ac.lk](mailto:rashmika.21@cse.mrt.ac.lk) | [buddhima.21@cse.mrt.ac.lk](mailto:buddhima.21@cse.mrt.ac.lk) | [shashini.21@cse.mrt.ac.lk](mailto:shashini.21@cse.mrt.ac.lk) | [wimukthi.21@cse.mrt.ac.lk](mailto:wimukthi.21@cse.mrt.ac.lk) | [kevin.22@cse.mrt.ac.lk](mailto:kevin.22@cse.mrt.ac.lk)
 - **GitHub Issues**: [issues](https://github.com/RashmikaDushan/TENG/issues)
 - **LinkedIn**: [Rashmika Dushan](https://www.linkedin.com/in/rashmika-dushan-011973248)
 

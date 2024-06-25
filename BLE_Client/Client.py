@@ -3,7 +3,7 @@ from bleak import BleakScanner,BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
-import time
+import time,binascii
 
 async def main():
     try:
@@ -44,7 +44,7 @@ async def main():
                     print(f"Characteristic {characteristic_uuid}")
                     while True:
                         value = await client.read_gatt_char(characteristic_uuid)
-                        print("Model Number: {0}".format("".join(map(chr, value))))
+                        print(binascii.hexlify(bytearray(value)))
                         time.sleep(0.5)
                 except Exception as e:
                     print(f"Failed to connect to {device.name} ({device.address}): {e}")

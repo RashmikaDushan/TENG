@@ -1,5 +1,6 @@
 import asyncio
 from bleak import BleakScanner,BleakClient
+import binascii,time
 
 MODEL_NBR_UUID = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 
@@ -16,9 +17,12 @@ async def main():
         print("Connecting to", devices[device_number].name, "with MAC address", device_mac)
 
         async with BleakClient(device_mac) as client:
+            await client.pair()
             # print(client.services)
-            model_number = await client.read_gatt_char(MODEL_NBR_UUID)
-            print("Model Number: {0}".format("".join(map(chr, model_number))))
+            while True:
+                model_number = await client.read_gatt_char(MODEL_NBR_UUID)
+                print(binascii.hexlify(bytearray(model_number)))
+                time.sleep(0.5)
 
 
 asyncio.run(main())

@@ -5,7 +5,8 @@ from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 import time,binascii
 
-address = "93A104FA-6531-4174-F7D7-B192C48D9540"
+# address = "93A104FA-6531-4174-F7D7-B192C48D9540" # use this for mac
+address = "E8:6B:EA:CF:DB:2E" # use this for windows
 service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
@@ -79,10 +80,12 @@ async def main(preconfigured):
 
                 while True: # Read the value of the selected characteristic
                     value = await client.read_gatt_char(characteristic_uuid)
-                    print(list(value))
+                    value = list(value)
+                    voltages = [x*3.3/255 for x in value]
+                    print(voltages)
                     await asyncio.sleep(0.5)
 
     except Exception as e:
         print(f"Error: {e}")
 
-asyncio.run(main(True))
+asyncio.run(main(False))

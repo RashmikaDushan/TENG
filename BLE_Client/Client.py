@@ -4,6 +4,7 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 import time,binascii
+import aioconsole
 
 async def main():
     try:
@@ -42,10 +43,27 @@ async def main():
                     characteristic_uuid = characteristic_uuids[selected_characteristic_number]
                     print(f"Service {selected_service.uuid}")
                     print(f"Characteristic {characteristic_uuid}")
-                    while True:
-                        value = await client.read_gatt_char(characteristic_uuid)
-                        print(list(value))
-                        await asyncio.sleep(0.5)
+
+                    async def read_characteristic():
+                        while True:
+                            value = await client.read_gatt_char(characteristic_uuid)
+                            print(list(value))
+                            await asyncio.sleep(0.5)
+
+                    task = asyncio.create_task(read_characteristic())
+
+                    async def handle_keyboard_input():
+                        nonlocal task
+                        async for line in aioconsole.ainput():
+                            if line.strip() == 'q':
+                                task.cancel()
+                                print("Disconnected.")
+                                await client.disconnect()
+                                break
+
+                    await asyncio.gather(task, handle_keyboard_input())
+                    await client.disconnect()
+
                 except Exception as e:
                     print(f"Failed to connect to {device.name} ({device.address}): {e}")
 

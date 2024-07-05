@@ -16,8 +16,12 @@
 CyclicBuffer buffer(bufferSize);
 uint8_t reading = 0;
 uint8_t byteArray[bufferSize * sizeof(uint8_t)];
-float alpha = 0.9;  // Smoothing factor
+float alpha = 0.7;  // Smoothing factor
+// float alpha2 = 0.7;  // Smoothing factor
+// float alpha3 = 0.9;  // Smoothing factor
 float filteredValue = 0;  // Initialize filtered value
+// float filteredValue2 = 0;  // Initialize filtered value
+// float filteredValue3 = 0;  // Initialize filtered value
 uint8_t filteredValueUint8 = 0;
 
 BLEServer *pServer = NULL;
@@ -91,11 +95,17 @@ void collectData(void *Parameters)
     {
         reading = analogRead(sensorPin);
         filteredValue = alpha * reading + (1 - alpha) * filteredValue;
-        filteredValueUint8 = (uint8_t)(filteredValue / 4095.0 * 255);
-        Serial.print("Reading: ");
-        Serial.printf("%02X  :   ", reading);
+        // filteredValue2 = alpha2 * reading + (1 - alpha2) * filteredValue2;
+        // filteredValue3 = alpha3 * reading + (1 - alpha3) * filteredValue3;
+        filteredValueUint8 = (uint8_t)(filteredValue);
+        // Serial.print("Reading: ");
+        // Serial.printf("%02X  :   ", reading);
         // Serial.println();
         Serial.println(filteredValue);
+        // Serial.print(" ");
+        // Serial.print(filteredValue2);
+        // Serial.print(" ");
+        // Serial.println(filteredValue3);
         buffer.push(filteredValueUint8);
         vTaskDelay(4 / portTICK_PERIOD_MS);
     }

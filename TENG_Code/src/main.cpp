@@ -6,8 +6,8 @@
 #include <BLE2902.h>
 
 // definitions
-#define sensorPin 36
-#define bufferSize 10
+#define sensorPin 35
+#define bufferSize 500
 
 #define SERVICE_UUID "349ecf79-ac9d-484f-9d93-b25e91613f78"
 #define CHARACTERISTIC_UUID "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
@@ -16,6 +16,9 @@
 CyclicBuffer buffer(bufferSize);
 uint8_t reading = 0;
 uint8_t byteArray[bufferSize * sizeof(uint8_t)];
+float alpha = 0.9;  // Smoothing factor
+float filteredValue = 0;  // Initialize filtered value
+uint8_t filteredValueUint8 = 0;
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -71,7 +74,7 @@ void setup()
     pAdvertising->setScanResponse(false);
     pAdvertising->setMinPreferred(0x0); // set value to 0x00 to not advertise this parameter
     BLEDevice::startAdvertising();
-    Serial.println("Waiting a client connection to notify...");
+    // Serial.println("Waiting a client connection to notify...");
 
     xTaskCreate(collectData, "Collecting Data", 10000, NULL, 3, NULL);
 
@@ -87,11 +90,14 @@ void collectData(void *Parameters)
     for (;;)
     {
         reading = analogRead(sensorPin);
+        filteredValue = alpha * reading + (1 - alpha) * filteredValue;
+        filteredValueUint8 = (uint8_t)(filteredValue / 4095.0 * 255);
         Serial.print("Reading: ");
-        Serial.printf("%02X", reading);
-        Serial.println();
-        buffer.push(reading);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        Serial.printf("%02X  :   ", reading);
+        // Serial.println();
+        Serial.println(filteredValue);
+        buffer.push(filteredValueUint8);
+        vTaskDelay(4 / portTICK_PERIOD_MS);
     }
 }
 
@@ -101,6 +107,7 @@ void sendData(void *Parameters)
     {
         if (deviceConnected)
         {
+            
             buffer.toByteArray(byteArray);
             buffer.printHex(true, true);
             pCharacteristic->setValue(byteArray, bufferSize * sizeof(uint8_t));
@@ -112,7 +119,7 @@ void sendData(void *Parameters)
         {
             delay(500);                  // give the bluetooth stack the chance to get things ready
             pServer->startAdvertising(); // restart advertising
-            Serial.println("start advertising");
+            // Serial.println("start advertising");
             oldDeviceConnected = deviceConnected;
         }
         // connecting

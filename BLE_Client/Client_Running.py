@@ -12,11 +12,14 @@ service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
 
+model = load_model('trained_model.keras') # Load the trained model
+
 previous_voltages = np.zeros(500)
 
 async def main(preconfigured):
     global characteristic_uuid
     global previous_voltages
+    global model
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
@@ -45,7 +48,12 @@ async def main(preconfigured):
                     # check the previous voltage equal to the current voltage
                     if not(np.array_equal(previous_voltages, voltages)):
                         previous_voltages = voltages
-                        print(voltages)
+                        # print(voltages)
+                        voltages = voltages.astype('float32') / 255.0  # Normalize data
+                        # Reshape data to fit the model's input shape
+                        voltages = np.expand_dims(voltages, axis=-1)
+                        prediction = model.predict(voltages) # Predict the gesture
+                        print(prediction)
                     await asyncio.sleep(1)
 
                     

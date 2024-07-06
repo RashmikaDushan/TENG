@@ -1,4 +1,5 @@
 import asyncio
+import numpy as np
 from bleak import BleakScanner,BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
@@ -11,7 +12,11 @@ service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
 
+previous_voltages = np.zeros(500)
+
 async def main(preconfigured):
+    global characteristic_uuid
+    global previous_voltages
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
@@ -32,12 +37,16 @@ async def main(preconfigured):
                     print(f"Connected: {device.name} ({device.address})")
                     await client.pair()
 
-                global characteristic_uuid
                 while True: # Read the value of the preconfigured characteristic
                     value = await client.read_gatt_char(characteristic_uuid)
-                    value = list(value)
-                    voltages = [x*3.3/255 for x in value]
-                    print(voltages)
+                    #value = list(value)
+                    # Convert byte array to numpy array
+                    voltages = np.frombuffer(value, dtype=np.uint8)
+                    # check the previous voltage equal to the current voltage
+                    if not(np.array_equal(previous_voltages, voltages)):
+                        previous_voltages = voltages
+                        print(voltages)
+                    await asyncio.sleep(1)
 
                     
         if not(preconfigured): # If the device is not preconfigured, list all devices and ask the user to select one
@@ -79,13 +88,16 @@ async def main(preconfigured):
                 print(f"Service {service_uuid}")
                 print(f"Characteristic {characteristic_uuid}")
 
-                while True: # Read the value of the selected characteristic
+                while True: # Read the value of the preconfigured characteristic
                     value = await client.read_gatt_char(characteristic_uuid)
-                    value = list(value)
-                    voltages = [x*3.3/255 for x in value]
-                    print(voltages)
-                    await asyncio.sleep(0.5)
-
+                    #value = list(value)
+                    # Convert byte array to numpy array
+                    voltages = np.frombuffer(value, dtype=np.uint8)
+                    # check the previous voltage equal to the current voltage
+                    if not(np.array_equal(previous_voltages, voltages)):
+                        previous_voltages = voltages
+                        print(voltages)
+                    await asyncio.sleep(1)
     except Exception as e:
         print(f"Error: {e}")
 

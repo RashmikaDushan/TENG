@@ -16,13 +16,24 @@
 CyclicBuffer buffer(bufferSize);
 uint8_t reading = 0;
 uint8_t byteArray[bufferSize * sizeof(uint8_t)];
-float alpha = 0.7;  // Smoothing factor
-// float alpha2 = 0.7;  // Smoothing factor
-// float alpha3 = 0.9;  // Smoothing factor
+float alpha = 0.7;  // Smoothing factor  // should be adjusted
+// float alpha2 = 0.7;
+// float alpha3 = 0.9;
 float filteredValue = 0;  // Initialize filtered value
-// float filteredValue2 = 0;  // Initialize filtered value
-// float filteredValue3 = 0;  // Initialize filtered value
+// float filteredValue2 = 0;
+// float filteredValue3 = 0;
 uint8_t filteredValueUint8 = 0;
+
+uint8_t threshold = 150; // Threshold value
+uint8_t thresholdCounter = 0; // to decide if the data is worth sending
+uint8_t thresholdCounterMax = 10; // to decide if the data is worth sending
+
+bool flagForSending = false;
+bool flagPulse = false;
+u_int16_t offsetCounter = 0;
+u_int16_t offsetCounterMax = 250; // should be adjusted
+
+uint8_t captureDelay = 6;  // should be adjusted
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -101,13 +112,40 @@ void collectData(void *Parameters)
         // Serial.print("Reading: ");
         // Serial.printf("%02X  :   ", reading);
         // Serial.println();
-        Serial.println(filteredValue);
+        // Serial.println(filteredValue);
         // Serial.print(" ");
         // Serial.print(filteredValue2);
         // Serial.print(" ");
         // Serial.println(filteredValue3);
         buffer.push(filteredValueUint8);
-        vTaskDelay(4 / portTICK_PERIOD_MS);
+        if(flagPulse==false){ // if not a pulse already detected
+            if (filteredValueUint8 >= threshold){
+                if(thresholdCounter <= thresholdCounterMax){ // to count the time for the pulse
+                    thresholdCounter++;
+                }
+                else{
+                    flagPulse = true; // if pulse long enough tag it
+                    Serial.println("Pulse");
+                    thresholdCounter = 0; 
+                }
+            }
+            else{
+                thresholdCounter = 0;  // if voltage drops under threshold ignore it
+            }
+        }
+
+        if(flagPulse){ // if pulse detected
+            if(offsetCounter<=offsetCounterMax){ // count for sometime
+                offsetCounter++;
+            }
+            else{
+                flagForSending = true; // then tag for sending
+                Serial.println("Tagged for sending");
+                offsetCounter = 0;
+                flagPulse = false;
+            }
+        }
+        vTaskDelay(captureDelay / portTICK_PERIOD_MS);
     }
 }
 
@@ -117,12 +155,14 @@ void sendData(void *Parameters)
     {
         if (deviceConnected)
         {
-            
-            buffer.toByteArray(byteArray);
-            buffer.printHex(true, true);
-            pCharacteristic->setValue(byteArray, bufferSize * sizeof(uint8_t));
-            pCharacteristic->indicate();
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
+            if(flagForSending){ // send only if tagged for sending
+                buffer.toByteArray(byteArray);
+                buffer.printHex(true, true);
+                pCharacteristic->setValue(byteArray, bufferSize * sizeof(uint8_t));
+                pCharacteristic->indicate();
+                flagForSending = false;
+            }
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
         // disconnecting
         if (!deviceConnected && oldDeviceConnected)

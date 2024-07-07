@@ -1,11 +1,7 @@
 import asyncio
 import numpy as np
-import os
+import sys
 from bleak import BleakScanner,BleakClient
-from bleak.backends.characteristic import BleakGATTCharacteristic
-from bleak.backends.device import BLEDevice
-from bleak.backends.scanner import AdvertisementData
-import time,binascii
 import matplotlib.pyplot as plt
 
 # address = "93A104FA-6531-4174-F7D7-B192C48D9540" # use this for mac
@@ -21,11 +17,24 @@ previous_voltages = np.zeros(data_count)
 voltages = np.zeros(data_count)
 time_steps = np.arange(0, data_count*time_interval, time_interval)
 
+def plot():
+    global voltages
+    global time_steps
+    # Plotting
+    plt.plot(time_steps, voltages, label='Voltages',color="#2ee57b")
+    plt.xlabel("Time (ms)")
+    plt.ylabel("Voltage (V)")
+    plt.title("Real-time Voltage Plot")
+    plt.grid(True)
+    plt.legend()
+    plt.pause(0.05)  # Pause to update plot
+    plt.clf()  # Clear the plot for the next iteration
+
 async def main(preconfigured):
     global characteristic_uuid
     global previous_voltages
     global voltages
-    global time_steps
+
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
@@ -43,6 +52,7 @@ async def main(preconfigured):
                 if client.is_connected:
                     print(f"Connected: {device.name} ({device.address})")
                     await client.pair()
+                    print("Waiting for data....")
 
                     with open(f"BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
                         while True: # Read the value of the preconfigured characteristic
@@ -54,16 +64,10 @@ async def main(preconfigured):
                             if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
                                 previous_voltages = voltages
                                 print(voltages)
-                                # Plotting
-                                plt.plot(time_steps, voltages, label='Voltages')
-                                plt.xlabel('Time Steps')
-                                plt.ylabel('Voltage')
-                                plt.title('Voltage vs Time')
-                                plt.legend()
-                                plt.grid(True)
-                                plt.pause(0.05)  # Pause to update plot
-                                plt.clf()  # Clear the plot for the next iteration
+                                plot()
                                 attempt = input("Do you want to record this data? (y/n): ")
+                                if attempt.lower() == "q":
+                                    sys.exit()
                                 if attempt.lower() == "y":
                                     for voltage in voltages:
                                         f.write(str(voltage) + " ")
@@ -123,16 +127,10 @@ async def main(preconfigured):
                         if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
                             previous_voltages = voltages
                             print(voltages)
-                            # Plotting
-                            plt.plot(time_steps, voltages, label='Voltages')
-                            plt.xlabel('Time Steps')
-                            plt.ylabel('Voltage')
-                            plt.title('Voltage vs Time')
-                            plt.legend()
-                            plt.grid(True)
-                            plt.pause(0.05)  # Pause to update plot
-                            plt.clf()  # Clear the plot for the next iteration
+                            plot()
                             attempt = input("Do you want to record this data? (y/n): ")
+                            if attempt.lower() == "q":
+                                sys.exit()
                             if attempt.lower() == "y":
                                 for voltage in voltages:
                                     f.write(str(voltage) + " ")

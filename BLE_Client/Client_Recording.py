@@ -9,9 +9,10 @@ address = "E8:6B:EA:CF:DB:2E" # use this for windows
 service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
-user_name = "dushan"
+user_name = "dushan_l"
 data_count = 500 # Number of data points to record
 time_interval = 6 # miliseconds
+attempt_number = 1
 
 previous_voltages = np.zeros(data_count)
 voltages = np.zeros(data_count)
@@ -34,6 +35,7 @@ async def main(preconfigured):
     global characteristic_uuid
     global previous_voltages
     global voltages
+    global attempt_number
 
     try:
         print("Scanning for devices...")
@@ -64,11 +66,13 @@ async def main(preconfigured):
                             if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
                                 previous_voltages = voltages
                                 print(voltages)
+                                print("Attempt number: ",attempt_number)
                                 plot()
                                 attempt = input("Do you want to record this data? (y/n): ")
                                 if attempt.lower() == "q":
                                     sys.exit()
                                 if attempt.lower() == "y":
+                                    attempt_number+=1
                                     for voltage in voltages:
                                         f.write(str(voltage) + " ")
                                     f.write("\n")
@@ -127,11 +131,13 @@ async def main(preconfigured):
                         if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
                             previous_voltages = voltages
                             print(voltages)
+                            print("Attempt number: ",attempt_number)
                             plot()
                             attempt = input("Do you want to record this data? (y/n): ")
                             if attempt.lower() == "q":
                                 sys.exit()
                             if attempt.lower() == "y":
+                                attempt_number+=1
                                 for voltage in voltages:
                                     f.write(str(voltage) + " ")
                                 f.write("\n")

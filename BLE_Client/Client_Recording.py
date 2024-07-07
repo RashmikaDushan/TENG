@@ -29,12 +29,6 @@ async def main(preconfigured):
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
-        fig, ax = plt.subplots() # Create a figure and axis
-        line, = ax.plot(time_steps, voltages) # plot the graph
-        plt.ion()  # Turn on interactive mode
-        plt.show() # Display the plot
-
-
         if preconfigured: # Look for the device with the preconfigured MAC address
             for i in range(len(devices)):
                     if devices[i].address == address:
@@ -50,19 +44,25 @@ async def main(preconfigured):
                     print(f"Connected: {device.name} ({device.address})")
                     await client.pair()
 
-                    with open(f"TENG/BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
+                    with open(f"BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
                         while True: # Read the value of the preconfigured characteristic
                             value = await client.read_gatt_char(characteristic_uuid)
                             #value = list(value)
                             # Convert byte array to numpy array
                             voltages = np.frombuffer(value, dtype=np.uint8)
                             # check the previous voltage equal to the current voltage
-                            if not(np.array_equal(previous_voltages, voltages)):
+                            if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
                                 previous_voltages = voltages
                                 print(voltages)
-                                ax.clear() # Clear the previous plot
-                                ax.plot(time_steps, voltages) # plot the graph
-                                plt.draw() # Draw the plot
+                                # Plotting
+                                plt.plot(time_steps, voltages, label='Voltages')
+                                plt.xlabel('Time Steps')
+                                plt.ylabel('Voltage')
+                                plt.title('Voltage vs Time')
+                                plt.legend()
+                                plt.grid(True)
+                                plt.pause(0.05)  # Pause to update plot
+                                plt.clf()  # Clear the plot for the next iteration
                                 attempt = input("Do you want to record this data? (y/n): ")
                                 if attempt.lower() == "y":
                                     for voltage in voltages:

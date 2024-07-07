@@ -113,24 +113,33 @@ async def main(preconfigured):
                 print(f"Service {service_uuid}")
                 print(f"Characteristic {characteristic_uuid}")
 
-                with open(f"TENG/BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
-                        while True: # Read the value of the preconfigured characteristic
-                            value = await client.read_gatt_char(characteristic_uuid)
-                            #value = list(value)
-                            # Convert byte array to numpy array
-                            voltages = np.frombuffer(value, dtype=np.uint8)
-                            # check the previous voltage equal to the current voltage
-                            if not(np.array_equal(previous_voltages, voltages)):
-                                previous_voltages = voltages
-                                print(voltages)
-                                attempt = input("Do you want to record this data? (y/n): ")
-                                if attempt.lower() == "y":
-                                    for voltage in voltages:
-                                        f.write(str(voltage) + " ")
-                                    f.write("\n")
-                                else:
-                                    continue
-                            await asyncio.sleep(1)
+                with open(f"BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
+                    while True: # Read the value of the preconfigured characteristic
+                        value = await client.read_gatt_char(characteristic_uuid)
+                        #value = list(value)
+                        # Convert byte array to numpy array
+                        voltages = np.frombuffer(value, dtype=np.uint8)
+                        # check the previous voltage equal to the current voltage
+                        if not(np.array_equal(previous_voltages, voltages)) and len(voltages)==data_count:
+                            previous_voltages = voltages
+                            print(voltages)
+                            # Plotting
+                            plt.plot(time_steps, voltages, label='Voltages')
+                            plt.xlabel('Time Steps')
+                            plt.ylabel('Voltage')
+                            plt.title('Voltage vs Time')
+                            plt.legend()
+                            plt.grid(True)
+                            plt.pause(0.05)  # Pause to update plot
+                            plt.clf()  # Clear the plot for the next iteration
+                            attempt = input("Do you want to record this data? (y/n): ")
+                            if attempt.lower() == "y":
+                                for voltage in voltages:
+                                    f.write(str(voltage) + " ")
+                                f.write("\n")
+                            else:
+                                continue
+                        await asyncio.sleep(1)
     except Exception as e:
         print(f"Error: {e}")
 

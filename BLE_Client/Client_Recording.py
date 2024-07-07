@@ -12,13 +12,13 @@ address = "E8:6B:EA:CF:DB:2E" # use this for windows
 service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
+user_name = "yosith"
 
 previous_voltages = np.zeros(500)
 
 async def main(preconfigured):
     global characteristic_uuid
     global previous_voltages
-    global service_name
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
@@ -38,33 +38,33 @@ async def main(preconfigured):
                 if client.is_connected:
                     print(f"Connected: {device.name} ({device.address})")
                     await client.pair()
+                    with open(f"TENG/BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
+                        while True: # Read the value of the preconfigured characteristic
+                            value = await client.read_gatt_char(characteristic_uuid)
+                            #value = list(value)
+                            # Convert byte array to numpy array
+                            voltages = np.frombuffer(value, dtype=np.uint8)
+                            # check the previous voltage equal to the current voltage
+                            if not(np.array_equal(previous_voltages, voltages)):
+                                previous_voltages = voltages
+                                print(voltages)
+                                attempt = input("Do you want to record this data? (y/n): ")
+                                if attempt.lower() == "y":
+                                    for voltage in voltages:
+                                        f.write(str(voltage) + " ")
+                                    f.write("\n")
+                                else:
+                                    continue
+                            await asyncio.sleep(1)
+            
+                    
+            
 
-            #asking the data is from new user or not
-            new_user = input("Is this a new user? (y/n): ")
-            if new_user == 'y':
-                #ask the user to enter the service name and characteristic name
-                service_name = input("Enter the user name: ")
-                print(f"New User is {service_name}")
-                with open(f'TENG/BLE_Client/{service_name}.txt', 'a') as file:
 
 
-
-                    while True: # Read the value of the preconfigured characteristic
-                        value = await client.read_gatt_char(characteristic_uuid)
-                        #value = list(value)
-                        # Convert byte array to numpy array
-                        voltages = np.frombuffer(value, dtype=np.uint8)
-                        # check the previous voltage equal to the current voltage
-                        if not(np.array_equal(previous_voltages, voltages)):
-                            previous_voltages = voltages
-                            print(voltages)
-                            for voltage in voltages:
-                                file.write(f'{voltages:.2f}\n')
-                        await asyncio.sleep(1)
-            elif new_user == 'n':
-                #ask the user to enter the service name and characteristic name
-                service_name = input("Enter the user name: ")
-                file_path = f"TENG/BLE_Client/{service_name}.txt"
+                    
+            
+            
 
 
 

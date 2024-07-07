@@ -6,22 +6,33 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 import time,binascii
+import matplotlib.pyplot as plt
 
 # address = "93A104FA-6531-4174-F7D7-B192C48D9540" # use this for mac
 address = "E8:6B:EA:CF:DB:2E" # use this for windows
 service_uuid = "349ecf79-ac9d-484f-9d93-b25e91613f78"
 characteristic_uuid = "c3fd1614-8aec-4c3d-b7b9-b2aafdfbec86"
 device = None
-user_name = "yosith"
+user_name = "dushan"
+data_count = 500 # Number of data points to record
+time_interval = 6 # miliseconds
 
-previous_voltages = np.zeros(500)
+previous_voltages = np.zeros(data_count)
+voltages = np.zeros(data_count)
+time_steps = np.arange(0, data_count*time_interval, time_interval)
 
 async def main(preconfigured):
     global characteristic_uuid
     global previous_voltages
+    global voltages
+    global time_steps
     try:
         print("Scanning for devices...")
         devices = await BleakScanner.discover() # Scan for devices
+        fig, ax = plt.subplots() # Create a figure and axis
+        line, = ax.plot(time_steps, voltages) # plot the graph
+        plt.ion()  # Turn on interactive mode
+        plt.show() # Display the plot
 
 
         if preconfigured: # Look for the device with the preconfigured MAC address
@@ -38,6 +49,7 @@ async def main(preconfigured):
                 if client.is_connected:
                     print(f"Connected: {device.name} ({device.address})")
                     await client.pair()
+
                     with open(f"TENG/BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
                         while True: # Read the value of the preconfigured characteristic
                             value = await client.read_gatt_char(characteristic_uuid)
@@ -48,6 +60,9 @@ async def main(preconfigured):
                             if not(np.array_equal(previous_voltages, voltages)):
                                 previous_voltages = voltages
                                 print(voltages)
+                                ax.clear() # Clear the previous plot
+                                ax.plot(time_steps, voltages) # plot the graph
+                                plt.draw() # Draw the plot
                                 attempt = input("Do you want to record this data? (y/n): ")
                                 if attempt.lower() == "y":
                                     for voltage in voltages:
@@ -56,19 +71,8 @@ async def main(preconfigured):
                                 else:
                                     continue
                             await asyncio.sleep(1)
-            
-                    
-            
 
-
-
-                    
-            
-            
-
-
-
-                    
+    ###################################################################################################################
                     
         if not(preconfigured): # If the device is not preconfigured, list all devices and ask the user to select one
             for i in range(len(devices)):
@@ -109,16 +113,24 @@ async def main(preconfigured):
                 print(f"Service {service_uuid}")
                 print(f"Characteristic {characteristic_uuid}")
 
-                while True: # Read the value of the preconfigured characteristic
-                    value = await client.read_gatt_char(characteristic_uuid)
-                    #value = list(value)
-                    # Convert byte array to numpy array
-                    voltages = np.frombuffer(value, dtype=np.uint8)
-                    # check the previous voltage equal to the current voltage
-                    if not(np.array_equal(previous_voltages, voltages)):
-                        previous_voltages = voltages
-                        print(voltages)
-                    await asyncio.sleep(1)
+                with open(f"TENG/BLE_Client/Sensor_Data/{user_name}.txt", "a") as f:
+                        while True: # Read the value of the preconfigured characteristic
+                            value = await client.read_gatt_char(characteristic_uuid)
+                            #value = list(value)
+                            # Convert byte array to numpy array
+                            voltages = np.frombuffer(value, dtype=np.uint8)
+                            # check the previous voltage equal to the current voltage
+                            if not(np.array_equal(previous_voltages, voltages)):
+                                previous_voltages = voltages
+                                print(voltages)
+                                attempt = input("Do you want to record this data? (y/n): ")
+                                if attempt.lower() == "y":
+                                    for voltage in voltages:
+                                        f.write(str(voltage) + " ")
+                                    f.write("\n")
+                                else:
+                                    continue
+                            await asyncio.sleep(1)
     except Exception as e:
         print(f"Error: {e}")
 
